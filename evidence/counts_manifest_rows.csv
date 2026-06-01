@@ -1,0 +1,5 @@
+benchmark,total_rows,unique_raw_sha256,unique_image_sha256,benign_rows,malware_rows,labelled_rows,ambiguous_rows,insufficient_vote_rows,unlabelled_rows
+binary_pe,49674,49674,49674,26651,23023,0,0,0,0
+binary_elf,326,326,326,163,163,0,0,0,0
+family_core,1267,1267,1267,0,1267,1267,0,0,0
+family_extended,21919,21919,21919,0,21919,2463,1431,469,17556

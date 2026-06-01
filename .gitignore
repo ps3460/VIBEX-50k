@@ -1,0 +1,32 @@
+# Raw and executable artifacts
+*.bin
+*.exe
+*.dll
+*.sys
+*.so
+*.dylib
+*.elf
+*.iso
+*.img
+*.zip
+*.7z
+*.tar
+*.gz
+
+# Model artifacts
+*.keras
+*.h5
+*.onnx
+*.tflite
+*.pt
+*.pth
+
+# Large image/sample trees
+*.png
+*.jpg
+*.jpeg
+samples/
+raw/
+artifacts/
+cache/
+tmp/

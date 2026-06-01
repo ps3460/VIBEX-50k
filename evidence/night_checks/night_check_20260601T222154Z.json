@@ -1,0 +1,271 @@
+{
+  "blockers": [],
+  "checks": {
+    "benchmark_outputs": {
+      "binary_elf_manifest": true,
+      "binary_pe_manifest": true,
+      "counts_manifest_rows": true,
+      "counts_png_rows": true,
+      "duplicate_png_hash": true,
+      "duplicate_raw_sha256": true,
+      "family_core_manifest": true,
+      "family_extended_manifest": true,
+      "family_strata_status": true
+    },
+    "codex_timers": {
+      "command": [
+        "systemctl",
+        "--user",
+        "list-timers",
+        "--all"
+      ],
+      "output": "NEXT                            LEFT LAST                                   PASSED UNIT                                ACTIVATES\nMon 2026-06-01 23:00:00 UTC    38min Mon 2026-06-01 22:00:53 UTC         21min ago vibex-holiday-supervisor.timer      vibex-holiday-supervisor.service\nTue 2026-06-02 00:20:00 UTC 1h 58min Mon 2026-06-01 18:20:03 UTC       4h 1min ago vibex-dataset-cycle.timer           vibex-dataset-cycle.service\nTue 2026-06-02 01:05:00 UTC 2h 43min Mon 2026-06-01 19:05:07 UTC      3h 16min ago vibex-stage2-queue.timer            vibex-stage2-queue.service\nTue 2026-06-02 02:15:00 UTC 3h 53min Mon 2026-06-01 14:15:53 UTC            8h ago vibex-family-cnn.timer              vibex-family-cnn.service\nTue 2026-06-02 09:30:00 UTC      11h Mon 2026-06-01 09:30:53 UTC           12h ago vibex-public-dataset-research.timer vibex-public-dataset-research.service\nTue 2026-06-02 19:00:00 UTC      20h Mon 2026-06-01 19:00:53 UTC      3h 21min ago vibex-daily-telegram.timer          vibex-daily-telegram.service\n-                                  - Mon 2026-05-25 03:00:53 UTC 1 week 0 days ago vibex-0400-status.timer             vibex-0400-status.service\n\n7 timers listed.",
+      "returncode": 0
+    },
+    "dashboard_http": {
+      "command": [
+        "nc",
+        "-vz",
+        "-w",
+        "5",
+        "10.64.0.87",
+        "8085"
+      ],
+      "output": "Connection to 10.64.0.87 8085 port [tcp/*] succeeded!",
+      "returncode": 0
+    },
+    "local_commands": {
+      "codex": "/usr/local/bin/codex",
+      "curl": "/usr/bin/curl",
+      "git": "/usr/bin/git",
+      "jq": "/usr/bin/jq",
+      "python3": "/usr/bin/python3",
+      "rg": "/usr/bin/rg",
+      "tmux": "/usr/bin/tmux"
+    },
+    "local_disk": {
+      "command": [
+        "df",
+        "-h",
+        "/home/phil"
+      ],
+      "output": "Filesystem                        Size  Used Avail Use% Mounted on\n/dev/mapper/pve-vm--127--disk--0   32G  7.4G   23G  25% /",
+      "returncode": 0
+    },
+    "local_paths": {
+      "research_root_exists": true,
+      "source_root_exists": true
+    },
+    "mariadb_tcp": {
+      "command": [
+        "nc",
+        "-vz",
+        "-w",
+        "5",
+        "10.64.0.98",
+        "3306"
+      ],
+      "output": "Connection to 10.64.0.98 3306 port [tcp/mysql] succeeded!",
+      "returncode": 0
+    },
+    "monitoring_ssh": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "phil@10.64.0.65",
+        "hostname; uptime; curl -sS http://127.0.0.1:9090/-/ready"
+      ],
+      "output": "Host key verification failed.",
+      "returncode": 255
+    },
+    "pi5_ssh": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "phil@10.64.1.102",
+        "hostname; uptime; cat /sys/class/thermal/thermal_zone0/temp; vcgencmd measure_temp 2>/dev/null || true; ps -eo pid,etimes,pcpu,pmem,cmd --sort=-pcpu | head -n 12"
+      ],
+      "output": "Pi5B-1-Lab\n 23:21:54 up 9 days, 10:02,  2 users,  load average: 0.00, 0.00, 0.00\n47950\ntemp=48.3'C\n    PID ELAPSED %CPU %MEM CMD\n 224439       0  4.5  0.1 sshd-session: phil [priv]\n    888  813736  0.0  0.0 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups\n    911  813735  0.0  0.2 /usr/bin/rpi-connectd\n      1  813741  0.0  0.1 /sbin/init\n    694  813737  0.0  0.0 /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only\n    299  813739  0.0  0.3 /usr/lib/systemd/systemd-journald\n 222624     958  0.0  0.0 [kworker/1:2-events]\n    698  813737  0.0  0.1 /usr/lib/systemd/systemd-logind\n 222710     564  0.0  0.0 [kworker/3:0-events]\n 224204     336  0.0  0.0 [kworker/1:0-events]\n    748  813737  0.0  0.2 /usr/sbin/NetworkManager --no-daemon",
+      "returncode": 0
+    },
+    "prometheus_core": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "phil@10.64.0.65",
+        "for q in 'up{instance=~\"10.0.0.157:9100|10.64.0.87:8085|https://prometheus.i.steadnet.com/-/ready\"}' 'pve_up{id=~\"lxc/102|lxc/124|lxc/127|lxc/670|node/pve\"}' 'node_load1{instance=~\"10.0.0.157:9100|10.64.0.87:9100|10.64.0.65:9100|10.0.0.11:9100\"}'; do curl -sS --get --data-urlencode query=\"$q\" http://127.0.0.1:9090/api/v1/query; echo; done"
+      ],
+      "output": "Host key verification failed.",
+      "returncode": 255
+    },
+    "proxmox_ssh": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "root@10.0.0.11",
+        "hostname; uptime"
+      ],
+      "output": "pve\n 23:21:47 up 37 days, 10:33,  1 user,  load average: 1.47, 1.15, 1.10",
+      "returncode": 0
+    },
+    "repo_banned_files": [],
+    "research_git_remote": {
+      "command": [
+        "git",
+        "-C",
+        "/home/phil/GitHub/VIBEX-50k",
+        "remote",
+        "-v"
+      ],
+      "output": "origin\tgit@github.com:ps3460/VIBEX-50k.git (fetch)\norigin\tgit@github.com:ps3460/VIBEX-50k.git (push)",
+      "returncode": 0
+    },
+    "runner_tcp": {
+      "command": [
+        "nc",
+        "-vz",
+        "-w",
+        "5",
+        "10.64.0.62",
+        "22"
+      ],
+      "output": "Connection to 10.64.0.62 22 port [tcp/ssh] succeeded!",
+      "returncode": 0
+    },
+    "source_git_remote": {
+      "command": [
+        "git",
+        "-C",
+        "/home/phil/repos/ESP32-Pi-Malware-Lab",
+        "remote",
+        "-v"
+      ],
+      "output": "origin\tgit@github.com:ps3460/ESP32-Pi-Malware-Lab.git (fetch)\norigin\tgit@github.com:ps3460/ESP32-Pi-Malware-Lab.git (push)",
+      "returncode": 0
+    },
+    "tmux_sessions": {
+      "command": [
+        "tmux",
+        "list-sessions"
+      ],
+      "output": "codex: 1 windows (created Sun May 24 20:10:19 2026)",
+      "returncode": 0
+    },
+    "workhorse_dataset_paths": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "workhorse",
+        "ls -ld /home/phil/vibex_secure_dataset /home/phil/vibex_secure_dataset/release/VIBEX-50K /home/phil/vibex_secure_dataset/evidence/holiday_run_20260524_8day/family_dataset /home/phil/vibex_secure_dataset/evidence/holiday_run_20260524_8day/stage2_sql_queues"
+      ],
+      "output": "drwx------ 16 phil phil 4096 May 19 10:42 /home/phil/vibex_secure_dataset\ndrwxrwxr-x 36 phil phil 4096 Jun  1 19:20 /home/phil/vibex_secure_dataset/evidence/holiday_run_20260524_8day/family_dataset\ndrwxrwxr-x  2 phil phil 4096 May 24 22:09 /home/phil/vibex_secure_dataset/evidence/holiday_run_20260524_8day/stage2_sql_queues\ndrwxrwxr-x  6 phil phil 4096 May 18 09:13 /home/phil/vibex_secure_dataset/release/VIBEX-50K",
+      "returncode": 0
+    },
+    "workhorse_gpu": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "workhorse",
+        "nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw --format=csv,noheader,nounits"
+      ],
+      "output": "41, 0, 0, 212, 8192, 10.82",
+      "returncode": 0
+    },
+    "workhorse_jobs": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "workhorse",
+        "ps -eo pid,etimes,pcpu,pmem,cmd --sort=-pcpu | egrep -i 'python|train|cnn|tensorflow|torch|ollama|virustotal' | head -n 20"
+      ],
+      "output": "1227  801608  0.4  0.8 /usr/bin/python3 /home/phil/.local/bin/jupyter-server -config=/home/phil/.jupyter/jupyter_lab_config.py --no-browser --ip=0.0.0.0 --ServerApp.allow_origin=*\n2203374     647  0.0  0.1 /usr/local/bin/ollama serve\n   1229  801608  0.0  0.0 /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers\n   1851  801607  0.0  0.0 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal\n2206246       0  0.0  0.0 zsh -c ps -eo pid,etimes,pcpu,pmem,cmd --sort=-pcpu | egrep -i 'python|train|cnn|tensorflow|torch|ollama|virustotal' | head -n 20\n2206248       0  0.0  0.0 grep -E -i python|train|cnn|tensorflow|torch|ollama|virustotal",
+      "returncode": 0
+    },
+    "workhorse_qemu": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "workhorse",
+        "for x in qemu-system-aarch64 qemu-system-arm qemu-aarch64 qemu-system-xtensa qemu-system-esp32; do command -v \"$x\" || true; done"
+      ],
+      "output": "/usr/bin/qemu-system-aarch64\n/usr/bin/qemu-system-arm",
+      "returncode": 0
+    },
+    "workhorse_ssh": {
+      "command": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "-i",
+        "/home/phil/.ssh/id_ed25519_Apr25",
+        "-o",
+        "IdentitiesOnly=yes",
+        "workhorse",
+        "hostname; uptime"
+      ],
+      "output": "ps3460-desktop\n 23:21:45 up 9 days,  6:40,  3 users,  load average: 0.08, 0.06, 0.07",
+      "returncode": 0
+    }
+  },
+  "created_utc": "2026-06-01T22:21:45Z",
+  "safe_to_shutdown_mac": true,
+  "warnings": []
+}

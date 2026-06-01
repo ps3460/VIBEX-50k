@@ -1,0 +1,9 @@
+source,file_kind,count
+microsoft_windows_11_25h2_install_wim,pe,18640
+microsoft_windows_server_2025_eval_install_wim,pe,7410
+microsoft_windows_11_25h2_iso,pe,323
+microsoft_windows_11_25h2_install_wim,mz,193
+ubuntu_26.04_live_server_squashfs,elf,121
+microsoft_windows_server_2025_eval_iso,pe,84
+ubuntu_26.04_desktop_iso,elf,42
+microsoft_windows_server_2025_eval_install_wim,mz,1

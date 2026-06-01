@@ -1,0 +1,144 @@
+{
+  "created_utc": "2026-06-01T18:20:04.726120+00:00",
+  "dataset_name": "VIBEX-50K",
+  "family_labelled_manifest": "/home/phil/vibex_secure_dataset/evidence/holiday_run_20260524_8day/family_dataset/20260601T182004Z/family_labelled_manifest.csv",
+  "family_labelled_manifest_sha256": "bae63e16df2c771bf018c1544c0f22da1edfdd5c13a4a1f7b6984f9974e55516",
+  "malware_rows": 23186,
+  "manifest": "/home/phil/vibex_secure_dataset/evidence/virustotal_campaign_20260522_20260601/input/safe_dataset_manifest_VIBEX-50K_20260518T081144Z.campaign.csv",
+  "manifest_sha256": "d7a752b2ec6607f0af899946a50091249df43afbb6d8d30d59b11bf2ffb333e5",
+  "output_root": "/home/phil/vibex_secure_dataset/evidence/holiday_run_20260524_8day/family_dataset/20260601T182004Z",
+  "split_counts": {
+    "test": 4638,
+    "train": 18257,
+    "validation": 291
+  },
+  "status_counts": {
+    "ambiguous": 1431,
+    "insufficient_votes": 469,
+    "labelled": 3730,
+    "unlabelled": 17556
+  },
+  "top_families": [
+    [
+      "unlabelled",
+      17556
+    ],
+    [
+      "ambiguous",
+      1431
+    ],
+    [
+      "insufficient_votes",
+      469
+    ],
+    [
+      "generickd",
+      367
+    ],
+    [
+      "razy",
+      145
+    ],
+    [
+      "autorun",
+      130
+    ],
+    [
+      "vmprotect",
+      125
+    ],
+    [
+      "expiro",
+      112
+    ],
+    [
+      "juko",
+      111
+    ],
+    [
+      "upatre",
+      106
+    ],
+    [
+      "bmhfbyrbndc",
+      103
+    ],
+    [
+      "upantix",
+      97
+    ],
+    [
+      "zusy",
+      88
+    ],
+    [
+      "salgorea",
+      88
+    ],
+    [
+      "sivis",
+      72
+    ],
+    [
+      "qqpass",
+      69
+    ],
+    [
+      "strictor",
+      63
+    ],
+    [
+      "urelas",
+      62
+    ],
+    [
+      "barys",
+      61
+    ],
+    [
+      "bulz",
+      57
+    ],
+    [
+      "vbclone",
+      55
+    ],
+    [
+      "delf",
+      50
+    ],
+    [
+      "selfdel",
+      50
+    ],
+    [
+      "mikey",
+      48
+    ],
+    [
+      "fragtor",
+      44
+    ],
+    [
+      "6362673",
+      43
+    ],
+    [
+      "ausiv",
+      37
+    ],
+    [
+      "bladabindi",
+      34
+    ],
+    [
+      "eylr",
+      32
+    ],
+    [
+      "autoit",
+      31
+    ]
+  ],
+  "validation_percent": 10
+}

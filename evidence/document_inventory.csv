@@ -1,0 +1,38 @@
+source_path,destination_path,decision,category,notes
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/000_ASSET_LIBRARY.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/000_RESEARCH_CONTEXT.md,/home/phil/GitHub/VIBEX-50k/docs/000_RESEARCH_CONTEXT.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/001_ARCHITECTURE.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/002_HIGH_LEVEL_DESIGN.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/003_LOW_LEVEL_DESIGN.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/004_SETUP.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/005_OPERATIONS.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/006_HARDWARE_INVENTORY.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/007_DATABASE.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/008_RESEARCH_WORKFLOW.md,/home/phil/GitHub/VIBEX-50k/docs/008_RESEARCH_WORKFLOW.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/009_TESTS_AND_AUDITS.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/010_PHD_RS485_BAUD_RATE_FINDINGS.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/011_WORKSPACE_COORDINATION.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/012_AI_WORKSPACE_GUIDE.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/014_NETWORK_GPIO_DIAGRAM.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/017_TELEGRAM_NOTIFICATIONS.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/024_VIBEX_DATASET_CONSTRUCTION_PROTOCOL.md,/home/phil/GitHub/VIBEX-50k/docs/024_VIBEX_DATASET_CONSTRUCTION_PROTOCOL.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/025_VIBEX_MALWARE_FAMILY_LABELING_PROTOCOL.md,/home/phil/GitHub/VIBEX-50k/docs/025_VIBEX_MALWARE_FAMILY_LABELING_PROTOCOL.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/026_VIBEX50_OVERNIGHT_MODEL_SEARCH_PLAN.md,/home/phil/GitHub/VIBEX-50k/docs/026_VIBEX50_OVERNIGHT_MODEL_SEARCH_PLAN.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/027_VIBEX50_RS485_PIPELINED_BATCH_PROTOCOL.md,/home/phil/GitHub/VIBEX-50k/docs/027_VIBEX50_RS485_PIPELINED_BATCH_PROTOCOL.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/028_LAB_ACCEPTANCE_RUNNER_PLAN.md,/home/phil/GitHub/VIBEX-50k/docs/028_LAB_ACCEPTANCE_RUNNER_PLAN.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/029_VIBEX_HOLIDAY_RESEARCH_RUNBOOK.md,/home/phil/GitHub/VIBEX-50k/docs/029_VIBEX_HOLIDAY_RESEARCH_RUNBOOK.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/030_VIBEX_RESEARCH_CONTROL_PLANE.md,/home/phil/GitHub/VIBEX-50k/docs/030_VIBEX_RESEARCH_CONTROL_PLANE.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/VIBEX_BUILD.md,/home/phil/GitHub/VIBEX-50k/docs/VIBEX_BUILD.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/VIBEX_PIPELINE_LESSONS_LEARNT.md,/home/phil/GitHub/VIBEX-50k/docs/VIBEX_PIPELINE_LESSONS_LEARNT.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/VIBEX_PROJECT.md,/home/phil/GitHub/VIBEX-50k/docs/VIBEX_PROJECT.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/VIBEX_RESULTS.md,/home/phil/GitHub/VIBEX-50k/docs/VIBEX_RESULTS.md,copied_to_research_repo,research_doc,Research-facing methodology or benchmark narrative.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/000_METRICS.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/000_METRICS.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260517_vibex_split_dataset_pipeline.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260517_vibex_split_dataset_pipeline.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260518_vibex50_binary_image_baselines.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260518_vibex50_binary_image_baselines.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260520_vibex50_bias_and_stage2_pivot.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260520_vibex50_bias_and_stage2_pivot.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260521_vibex50_w96_thr0145_smoke_payload.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260521_vibex50_w96_thr0145_smoke_payload.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260522_vibex50_virustotal_family_campaign.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260522_vibex50_virustotal_family_campaign.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260523_vibex50_esp32_local_csv_stage12_experiment.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260523_vibex50_esp32_local_csv_stage12_experiment.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/metrics/20260524_vibex_holiday_research_log.md,/home/phil/GitHub/VIBEX-50k/docs/metrics/20260524_vibex_holiday_research_log.md,copied_to_research_repo,metrics_note,Dated evidence or benchmark result note.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/operations/000_PROXMOX.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
+/home/phil/repos/ESP32-Pi-Malware-Lab/docs/operations/001_VAULT_APPROLE.md,,retained_in_lab_repo,operations_doc,Runtime or infrastructure ownership stays with the lab repo.
