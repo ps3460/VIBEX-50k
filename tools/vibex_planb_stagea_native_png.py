@@ -270,9 +270,40 @@ def fetch_candidates(api_key: str, families: list[str], limit: int, timeout: flo
     return grouped, statuses
 
 
+def families_from_source_report(source_report: dict[str, Any]) -> list[str]:
+    raw = source_report.get("families") or {}
+    if isinstance(raw, dict):
+        return sorted(str(key) for key in raw if str(key).strip())
+    if isinstance(raw, list):
+        families = []
+        for item in raw:
+            if isinstance(item, dict):
+                signature = str(item.get("signature") or "").strip()
+                selected = int(item.get("selected_samples") or item.get("pe_like_samples") or 0)
+                if signature and selected > 0:
+                    families.append(signature)
+            else:
+                signature = str(item or "").strip()
+                if signature:
+                    families.append(signature)
+        return sorted(dict.fromkeys(families))
+    return []
+
+
+def count_executable_files(path: Path) -> int:
+    count = 0
+    for item in path.rglob("*"):
+        try:
+            if item.is_file() and item.stat().st_mode & 0o111:
+                count += 1
+        except OSError:
+            continue
+    return count
+
+
 def run(args: argparse.Namespace) -> dict[str, Any]:
     source_report = json.loads(Path(args.source_report).read_text(encoding="utf-8"))
-    families = args.families or sorted((source_report.get("families") or {}).keys())
+    families = args.families or families_from_source_report(source_report)
     if not families:
         raise SystemExit("No families supplied or found in source report")
     run_id = args.run_id or f"planb_stagea_native_{utc_stamp()}"
@@ -318,6 +349,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         payload = post_api(api_key, {"query": "get_file", "sha256_hash": sha}, args.timeout)
                         assert isinstance(payload, bytes)
                         archive_path.write_bytes(payload)
+                        archive_path.chmod(0o640)
                         row["archive_source"] = "malwarebazaar_api"
                         if args.sleep_seconds:
                             time.sleep(args.sleep_seconds)
@@ -336,6 +368,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     continue
                 sample_path.parent.mkdir(parents=True, exist_ok=True)
                 sample_path.write_bytes(data)
+                sample_path.chmod(0o640)
                 row["status"] = "verified_image"
                 verified[family][sha] = {
                     "sha256_hash": sha,
@@ -421,6 +454,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "metadata_query_statuses": query_statuses,
         "download_status_counts": dict(Counter(str(row.get("status") or "") for row in download_rows)),
         "missing_raw_count": len(missing_raw),
+        "quarantine_executable_file_count": count_executable_files(root / "quarantine"),
         "artifacts": {
             "download_manifest_csv": str(evidence_dir / "planb_stagea_download_manifest.csv"),
             "native_png_manifest_csv": str(evidence_dir / "planb_stagea_native_png_manifest.csv"),
