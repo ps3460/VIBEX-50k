@@ -1,25 +1,56 @@
 {
   "dashboard_url": "https://malwarelab.i.steadnet.com/plan-b",
-  "detail": "Expansion PID 4189519 is still running.",
-  "disk": "/dev/sda1       915G  721G  148G  84% /home",
+  "detail": "Odd CNN sweep PID 8997 is running.",
+  "disk": "/dev/sda1       915G  731G  138G  85% /home",
   "expand": {
-    "families": {},
-    "family_count": 0,
-    "native_png_rows": 0,
-    "quarantine_executable_file_count": null,
+    "families": {
+      "ACRStealer": 314,
+      "AsyncRAT": 300,
+      "CobaltStrike": 0,
+      "ConnectWise": 326,
+      "DarkCloud": 0,
+      "DarkTortilla": 300,
+      "Gh0stRAT": 147,
+      "GuLoader": 0,
+      "LummaStealer": 0,
+      "MassLogger": 0,
+      "NanoCore": 321,
+      "QuasarRAT": 300,
+      "SalatStealer": 500,
+      "ValleyRAT": 500,
+      "Vidar": 300,
+      "a310Logger": 0,
+      "njrat": 0
+    },
+    "family_count": 17,
+    "native_png_rows": 6616,
+    "quarantine_executable_file_count": 0,
     "report_path": "/home/phil/vibex_secure_dataset/sources/malwarebazaar_planb/planb_overnight_20260604_native_17x500/evidence/planb_stagea_report.json",
     "run_id": "planb_overnight_20260604_native_17x500",
-    "verified_malware_rows": 0
+    "verified_malware_rows": 3308
   },
-  "gpu": "37, 0, 212, 8192, 10.44",
-  "stage": "expansion_running",
+  "gpu": "75, 97, 6763, 8192, 112.52",
+  "stage": "sweep_running",
   "sweep": {
-    "best_binary": null,
+    "best_binary": {
+      "accuracy_mean": "1.0",
+      "accuracy_std": "0.0",
+      "architecture": "compact_cnn",
+      "best_accuracy": "1.0",
+      "best_macro_f1": "1.0",
+      "best_seed": "1337",
+      "completed_seeds": "1",
+      "image_size": "256",
+      "macro_f1_mean": "1.0",
+      "macro_f1_std": "0.0",
+      "mean_benign_false_positive_rate": "0.0",
+      "task": "binary"
+    },
     "best_family": null,
-    "completed": 0,
-    "failed": 0,
+    "completed": 9,
+    "failed": 1,
     "results_json": "/home/phil/vibex_secure_dataset/sources/malwarebazaar_planb/model_sweeps/planb_overnight_20260604_odd_cnn_17x500/evidence/planb_overnight_cnn_results.json",
     "run_id": "planb_overnight_20260604_odd_cnn_17x500"
   },
-  "updated_at": "2026-06-04T21:33:45Z"
+  "updated_at": "2026-06-04T23:29:27Z"
 }
