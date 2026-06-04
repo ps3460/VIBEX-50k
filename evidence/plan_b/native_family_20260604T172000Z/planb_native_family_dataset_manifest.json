@@ -1,0 +1,59 @@
+{
+  "class_counts": {
+    "ACRStealer": 298,
+    "Arechclient2": 298,
+    "AsyncRAT": 298,
+    "ConnectWise": 298,
+    "DarkTortilla": 298,
+    "NanoCore": 298,
+    "QuasarRAT": 298,
+    "SalatStealer": 298,
+    "ValleyRAT": 298,
+    "Vidar": 298
+  },
+  "metadata": {
+    "architectures": [
+      "compact_cnn",
+      "dense_small",
+      "residual_small",
+      "inception_small",
+      "convnext_tiny_scratch"
+    ],
+    "created_at": "2026-06-04T16:42:43Z",
+    "epochs": 10,
+    "family_count": 10,
+    "family_counts": {
+      "ACRStealer": 298,
+      "Arechclient2": 298,
+      "AsyncRAT": 298,
+      "ConnectWise": 298,
+      "DarkTortilla": 298,
+      "NanoCore": 298,
+      "QuasarRAT": 298,
+      "SalatStealer": 298,
+      "ValleyRAT": 298,
+      "Vidar": 298
+    },
+    "image_manifest": "/home/phil/vibex_secure_dataset/sources/malwarebazaar_planb/planb_stagea_native_20260604T161000Z/evidence/planb_stagea_native_png_manifest.csv",
+    "image_modes": [
+      "gray",
+      "rgb_triplet"
+    ],
+    "image_sizes": [
+      256,
+      512
+    ],
+    "output_root": "/home/phil/vibex_secure_dataset/sources/malwarebazaar_planb/model_sweeps/planb_stagea_family_native_20260604T172000Z",
+    "patience": 3,
+    "previous_best_family_macro_f1": 0.1716344470733068,
+    "primary_metric": "malware_family_macro_f1_mean",
+    "rows_per_size_mode": 2980,
+    "run_id": "planb_stagea_family_native_20260604T172000Z",
+    "seeds": [
+      1337,
+      2027,
+      4099
+    ],
+    "target_per_family": 298
+  }
+}
