@@ -23,6 +23,9 @@ DEFAULT_ARCHITECTURES = [
     "residual_small",
     "inception_small",
     "separable_extreme",
+    "separable_lite",
+    "mobilenet_tiny",
+    "pi_depthwise_quant_candidate",
     "barcode_dilated",
     "random_reservoir",
     "patch_shuffle_cnn",
@@ -370,6 +373,32 @@ def build_model(architecture: str, image_size: int, class_count: int):
             x = conv_block(tf, x, filters, separable=True)
             x = tf.keras.layers.MaxPooling2D()(x)
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    elif architecture == "separable_lite":
+        x = inputs
+        for filters in (16, 32, 64, 96):
+            x = conv_block(tf, x, filters, separable=True)
+            x = tf.keras.layers.MaxPooling2D()(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    elif architecture == "mobilenet_tiny":
+        x = tf.keras.layers.Conv2D(16, 3, strides=2, padding="same", use_bias=False)(inputs)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Activation("relu")(x)
+        for filters, stride in ((24, 1), (32, 2), (48, 1), (64, 2), (96, 1), (128, 2)):
+            x = tf.keras.layers.DepthwiseConv2D(3, strides=stride, padding="same", use_bias=False)(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation("relu")(x)
+            x = tf.keras.layers.Conv2D(filters, 1, padding="same", use_bias=False)(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation("relu")(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    elif architecture == "pi_depthwise_quant_candidate":
+        x = inputs
+        for filters in (16, 24, 32, 48, 64):
+            x = tf.keras.layers.SeparableConv2D(filters, 3, padding="same", use_bias=False)(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.ReLU(max_value=6.0)(x)
+            x = tf.keras.layers.MaxPooling2D()(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
     elif architecture == "barcode_dilated":
         a = tf.keras.layers.Conv2D(48, (1, 31), padding="same", activation="relu")(inputs)
         b = tf.keras.layers.Conv2D(48, (31, 1), padding="same", activation="relu")(inputs)
@@ -408,7 +437,7 @@ def build_model(architecture: str, image_size: int, class_count: int):
         x = tf.keras.layers.AveragePooling2D(pool_size=2, strides=1, padding="same")(inputs)
         for filters in (32, 64, 128, 192):
             x = conv_block(tf, x, filters)
-            x = tf.keras.layers.AveragePooling2D()(x)
+            x = tf.keras.layers.AveragePooling2D(pool_size=2)(x)
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
     elif architecture == "large_kernel_texture":
         x = inputs
@@ -464,6 +493,7 @@ def train_one(
     patience: int,
     max_temp_c: int,
     pause_temp_c: int,
+    export_tflite: bool,
 ) -> dict[str, Any]:
     import numpy as np
     import tensorflow as tf
@@ -479,6 +509,7 @@ def train_one(
     model_dir = output_root / "models" / run_name
     model_dir.mkdir(parents=True, exist_ok=True)
     model_path = model_dir / f"{run_name}.keras"
+    tflite_path = model_dir / f"{run_name}.tflite"
     start = time.time()
     result: dict[str, Any] = {
         "task": task,
@@ -518,6 +549,28 @@ def train_one(
         cm = confusion_matrix(y_true, y_pred, labels=list(range(len(labels))))
         per_class = f1_score(y_true, y_pred, labels=list(range(len(labels)),), average=None, zero_division=0)
         model.save(model_path)
+        tflite_status: dict[str, Any] = {"requested": export_tflite}
+        if export_tflite:
+            try:
+                converter = tf.lite.TFLiteConverter.from_keras_model(model)
+                converter.optimizations = [tf.lite.Optimize.DEFAULT]
+                tflite_path.write_bytes(converter.convert())
+                tflite_status.update(
+                    {
+                        "status": "converted",
+                        "tflite_path": str(tflite_path),
+                        "tflite_sha256": sha256_file(tflite_path),
+                        "tflite_bytes": tflite_path.stat().st_size,
+                    }
+                )
+            except Exception as exc:
+                tflite_status.update(
+                    {
+                        "status": "failed",
+                        "error_type": type(exc).__name__,
+                        "error": str(exc)[:500],
+                    }
+                )
         per_class_f1 = {label: float(per_class[index]) for index, label in enumerate(labels)}
         result.update(
             {
@@ -535,6 +588,8 @@ def train_one(
                 "epochs_run": len(history.history.get("loss", [])),
                 "model_path": str(model_path),
                 "model_sha256": sha256_file(model_path),
+                "model_bytes": model_path.stat().st_size,
+                "tflite": tflite_status,
                 "completed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "gpu_after": gpu_status(),
             }
@@ -581,6 +636,10 @@ def safe_row(result: dict[str, Any]) -> dict[str, Any]:
         "train_seconds": result.get("train_seconds"),
         "model_path": result.get("model_path"),
         "model_sha256": result.get("model_sha256"),
+        "model_bytes": result.get("model_bytes"),
+        "tflite_status": (result.get("tflite") or {}).get("status"),
+        "tflite_bytes": (result.get("tflite") or {}).get("tflite_bytes"),
+        "tflite_sha256": (result.get("tflite") or {}).get("tflite_sha256"),
         "error_type": result.get("error_type"),
         "error": result.get("error"),
         "completed_at": result.get("completed_at"),
@@ -707,6 +766,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "seeds": args.seeds,
         "epochs": args.epochs,
         "patience": args.patience,
+        "export_tflite": args.export_tflite,
         "max_temp_c": args.max_temp_c,
         "pause_temp_c": args.pause_temp_c,
     }
@@ -727,6 +787,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     args.patience,
                     args.max_temp_c,
                     args.pause_temp_c,
+                    args.export_tflite,
                 )
                 results.append(result)
                 write_evidence(evidence_dir, metadata, results)
@@ -762,6 +823,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-benign-class-rows", type=int, default=50)
     parser.add_argument("--max-temp-c", type=int, default=85)
     parser.add_argument("--pause-temp-c", type=int, default=82)
+    parser.add_argument("--export-tflite", action="store_true")
     args = parser.parse_args()
     args.tasks = parse_strings(args.tasks)
     args.architectures = parse_strings(args.architectures)
