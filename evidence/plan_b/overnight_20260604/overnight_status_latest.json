@@ -1,6 +1,6 @@
 {
   "dashboard_url": "https://malwarelab.i.steadnet.com/plan-b",
-  "detail": "Odd CNN sweep PID 8997 is running.",
+  "detail": "Expansion and odd CNN sweep are complete.",
   "disk": "/dev/sda1       915G  731G  138G  85% /home",
   "expand": {
     "families": {
@@ -29,8 +29,8 @@
     "run_id": "planb_overnight_20260604_native_17x500",
     "verified_malware_rows": 3308
   },
-  "gpu": "75, 97, 6763, 8192, 112.52",
-  "stage": "sweep_running",
+  "gpu": "39, 0, 213, 8192, 10.89",
+  "stage": "sweep_complete",
   "sweep": {
     "best_binary": {
       "accuracy_mean": "1.0",
@@ -46,11 +46,24 @@
       "mean_benign_false_positive_rate": "0.0",
       "task": "binary"
     },
-    "best_family": null,
-    "completed": 9,
-    "failed": 1,
+    "best_family": {
+      "accuracy_mean": "0.7540322580645161",
+      "accuracy_std": "0.0",
+      "architecture": "inception_small",
+      "best_accuracy": "0.7540322580645161",
+      "best_macro_f1": "0.7495267925370207",
+      "best_seed": "1337",
+      "completed_seeds": "1",
+      "image_size": "256",
+      "macro_f1_mean": "0.7495267925370207",
+      "macro_f1_std": "0.0",
+      "mean_benign_false_positive_rate": "0.0",
+      "task": "malware_family"
+    },
+    "completed": 33,
+    "failed": 3,
     "results_json": "/home/phil/vibex_secure_dataset/sources/malwarebazaar_planb/model_sweeps/planb_overnight_20260604_odd_cnn_17x500/evidence/planb_overnight_cnn_results.json",
     "run_id": "planb_overnight_20260604_odd_cnn_17x500"
   },
-  "updated_at": "2026-06-04T23:29:27Z"
+  "updated_at": "2026-06-05T00:29:49Z"
 }
