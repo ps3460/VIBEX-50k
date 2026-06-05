@@ -186,6 +186,49 @@ def archive_registry(output_root: Path) -> dict[str, Path]:
     return archives
 
 
+def scan_existing_image_verified(
+    root: Path,
+    families: set[str],
+    archives: dict[str, Path],
+    image_sizes: list[int],
+    image_modes: list[str],
+) -> dict[str, dict[str, dict[str, str]]]:
+    verified: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
+    slug_to_family = {slug(family): family for family in families}
+    images_root = root / "images" / "native"
+    for mode in image_modes:
+        for size in image_sizes:
+            size_root = images_root / mode / str(size)
+            if not size_root.exists():
+                continue
+            for family_dir in size_root.iterdir():
+                if not family_dir.is_dir():
+                    continue
+                family = slug_to_family.get(family_dir.name)
+                if not family:
+                    continue
+                for image_path in family_dir.glob("*.png"):
+                    sha = image_path.stem.lower()
+                    if not re.fullmatch(r"[0-9a-f]{64}", sha):
+                        continue
+                    archive_path = archives.get(sha)
+                    sample_path = root / "quarantine" / "samples" / family_dir.name / sha
+                    verified[family].setdefault(
+                        sha,
+                        {
+                            "sha256_hash": sha,
+                            "family": family,
+                            "sample_path": str(sample_path) if sample_path.exists() else "",
+                            "archive_path": str(archive_path) if archive_path else "",
+                            "source_manifest": "existing_image_files",
+                            "file_bytes": "",
+                            "imphash": "",
+                            "tlsh": "",
+                        },
+                    )
+    return verified
+
+
 def extract_single_file(zip_path: Path) -> tuple[bytes | None, str]:
     tool = shutil.which("7z") or shutil.which("7zz") or shutil.which("7za")
     if not tool:
@@ -331,18 +374,22 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         path.mkdir(parents=True, exist_ok=True)
 
     api_key = read_api_key(Path(args.api_key_file))
-    previous_verified, previous_attempted = scan_previous(output_root, set(families))
     archives = archive_registry(output_root)
+    previous_verified, previous_attempted = scan_previous(output_root, set(families))
+    image_verified = scan_existing_image_verified(root, set(families), archives, args.image_sizes, args.image_modes)
+    for family, rows in image_verified.items():
+        previous_verified[family].update({sha: row for sha, row in rows.items() if sha not in previous_verified[family]})
     candidates, query_statuses = fetch_candidates(api_key, families, args.metadata_limit, args.timeout, args.sleep_seconds)
 
     download_rows: list[dict[str, Any]] = []
     verified: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
+    for family in families:
+        verified[family].update(previous_verified.get(family, {}))
     stop_reason = ""
     api_download_attempts = 0
     for family in families:
         if stop_reason:
             break
-        verified[family].update(previous_verified.get(family, {}))
         needed = max(0, args.target_per_family - len(verified[family]))
         budget = int(math.ceil(needed * args.request_multiplier)) + args.request_buffer
         attempted = 0
@@ -425,13 +472,38 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     for family in families:
         records = [verified[family][sha] for sha in sorted(verified[family])[: args.target_per_family]]
         for record in records:
+            missing_outputs: list[tuple[str, int, Path]] = []
+            for mode in args.image_modes:
+                for size in args.image_sizes:
+                    output_path = images_dir / mode / str(size) / slug(family) / f"{record['sha256_hash']}.png"
+                    if output_path.exists():
+                        image_rows.append(
+                            {
+                                "sha256_hash": record["sha256_hash"],
+                                "family": family,
+                                "image_mode": mode,
+                                "image_size": size,
+                                "image_path": str(output_path),
+                                "source_bytes": record.get("file_bytes", ""),
+                                "sample_path": record.get("sample_path", ""),
+                                "archive_path": record.get("archive_path", ""),
+                                "imphash": record.get("imphash", ""),
+                                "tlsh": record.get("tlsh", ""),
+                                "source_byte_width": "",
+                                "image_sha256": sha256_file(output_path),
+                                "image_generation": "existing_byte_square_image",
+                                "resize_method": args.resize_method.lower(),
+                            }
+                        )
+                    else:
+                        missing_outputs.append((mode, size, output_path))
+            if not missing_outputs:
+                continue
             data = raw_bytes_for(record)
             if data is None:
                 missing_raw.append(record)
                 continue
-            for mode in args.image_modes:
-                for size in args.image_sizes:
-                    output_path = images_dir / mode / str(size) / slug(family) / f"{record['sha256_hash']}.png"
+            for mode, size, output_path in missing_outputs:
                     info = bytes_to_png(data, output_path, size, mode, args.resize_method)
                     image_rows.append(
                         {
