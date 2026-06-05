@@ -156,9 +156,13 @@ def scan_previous(output_root: Path, families: set[str]) -> tuple[dict[str, dict
             sha = str(row.get("sha256_hash") or row.get("actual_sha256") or "").lower()
             if family not in families or not re.fullmatch(r"[0-9a-f]{64}", sha):
                 continue
-            attempted[family].add(sha)
             if row.get("status") != "verified_image":
+                status = str(row.get("status") or "")
+                if status.startswith("api_error") or status.startswith("api_ratelimit"):
+                    continue
+                attempted[family].add(sha)
                 continue
+            attempted[family].add(sha)
             sample_path = str(row.get("sample_path") or "")
             archive_path = str(row.get("archive_path") or "")
             verified[family][sha] = {
@@ -211,6 +215,16 @@ def extract_single_file(zip_path: Path) -> tuple[bytes | None, str]:
         return file_path.read_bytes(), "ok"
     finally:
         shutil.rmtree(extract_root, ignore_errors=True)
+
+
+def api_error_payload(data: bytes) -> dict[str, Any] | None:
+    if not data.lstrip().startswith(b"{"):
+        return None
+    try:
+        payload = json.loads(data.decode("utf-8", errors="replace"))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) and payload.get("query_status") else None
 
 
 def raw_bytes_for(record: dict[str, str]) -> bytes | None:
@@ -323,12 +337,18 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     download_rows: list[dict[str, Any]] = []
     verified: dict[str, dict[str, dict[str, str]]] = defaultdict(dict)
+    stop_reason = ""
+    api_download_attempts = 0
     for family in families:
+        if stop_reason:
+            break
         verified[family].update(previous_verified.get(family, {}))
         needed = max(0, args.target_per_family - len(verified[family]))
         budget = int(math.ceil(needed * args.request_multiplier)) + args.request_buffer
         attempted = 0
         for candidate in candidates.get(family, []):
+            if stop_reason:
+                break
             if len(verified[family]) >= args.target_per_family or attempted >= budget:
                 break
             sha = candidate["sha256_hash"]
@@ -346,8 +366,24 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         shutil.copy2(source_archive, archive_path)
                         row["archive_source"] = str(source_archive)
                     else:
+                        if args.max_download_attempts and api_download_attempts >= args.max_download_attempts:
+                            stop_reason = f"max_download_attempts:{args.max_download_attempts}"
+                            break
+                        api_download_attempts += 1
                         payload = post_api(api_key, {"query": "get_file", "sha256_hash": sha}, args.timeout)
                         assert isinstance(payload, bytes)
+                        error_payload = api_error_payload(payload)
+                        if error_payload:
+                            query_status = str(error_payload.get("query_status") or "error")
+                            message = str(error_payload.get("message") or "")
+                            row["status"] = f"api_{query_status}"
+                            row["api_query_status"] = query_status
+                            row["api_message"] = message[:200]
+                            download_rows.append(row)
+                            if "ratelimit" in message.lower() or "rate" in query_status.lower():
+                                stop_reason = "malwarebazaar_download_rate_limited"
+                                break
+                            continue
                         archive_path.write_bytes(payload)
                         archive_path.chmod(0o640)
                         row["archive_source"] = "malwarebazaar_api"
@@ -453,6 +489,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "resize_method": args.resize_method.lower(),
         "metadata_query_statuses": query_statuses,
         "download_status_counts": dict(Counter(str(row.get("status") or "") for row in download_rows)),
+        "stop_reason": stop_reason,
+        "api_download_attempts": api_download_attempts,
         "missing_raw_count": len(missing_raw),
         "quarantine_executable_file_count": count_executable_files(root / "quarantine"),
         "artifacts": {
@@ -469,6 +507,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         f"- Run ID: `{run_id}`",
         f"- Verified malware rows: `{report['verified_malware_rows']}`",
         f"- Native PNG rows: `{report['native_png_rows']}`",
+        f"- API download attempts: `{report['api_download_attempts']}`",
+        f"- Stop reason: `{report['stop_reason'] or 'completed'}`",
         f"- Image sizes: `{', '.join(str(size) for size in args.image_sizes)}`",
         f"- Image modes: `{', '.join(args.image_modes)}`",
         f"- Resize method: `{args.resize_method.lower()}`",
@@ -495,6 +535,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--metadata-limit", type=int, default=1000)
     parser.add_argument("--request-multiplier", type=float, default=1.6)
     parser.add_argument("--request-buffer", type=int, default=40)
+    parser.add_argument("--max-download-attempts", type=int, default=0)
     parser.add_argument("--image-sizes", type=lambda value: [int(item) for item in value.split(",") if item.strip()], default=[256, 512, 1024])
     parser.add_argument("--image-modes", type=lambda value: [item.strip() for item in value.split(",") if item.strip()], default=["gray", "rgb_triplet"])
     parser.add_argument("--resize-method", default="bilinear", choices=["nearest", "bilinear", "bicubic", "lanczos"])
