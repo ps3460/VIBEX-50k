@@ -247,7 +247,7 @@ def send_telegram(title: str, body: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Monitor Plan B 25k scale run and publish safe dashboard status.")
-    parser.add_argument("--poll-seconds", type=int, default=300)
+    parser.add_argument("--poll-seconds", type=int, default=60)
     parser.add_argument("--send-1400", action="store_true")
     args = parser.parse_args()
     log("scale25 monitor started")
