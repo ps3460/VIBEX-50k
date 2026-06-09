@@ -9,7 +9,8 @@ $StatusPath = Join-Path $env:TEMP "sandbox_campaign_status.json"
 New-Item -ItemType Directory -Force -Path $RunDir | Out-Null
 Push-Location $RepoRoot
 try {
-    "=== VM107 dashboard exporter start $(Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mm:ssZ') ===" | Out-File -FilePath $LogPath -Append -Encoding utf8
+    $stamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    "=== VM107 dashboard exporter start $stamp ===" | Out-File -FilePath $LogPath -Append -Encoding utf8
     $python = Get-Command py -ErrorAction SilentlyContinue
     if ($python) {
         $cmd = @("-3")
