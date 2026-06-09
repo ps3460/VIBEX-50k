@@ -1,0 +1,12 @@
+{
+  "action": "campaign_active",
+  "campaign_active": true,
+  "completed_result_rows": 614,
+  "done_batches": 1,
+  "next_batch": 1,
+  "qga_ok": true,
+  "run_id": "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools",
+  "target_rows": 20679,
+  "total_batches": 42,
+  "updated_utc": "2026-06-09T16:41:38Z"
+}

@@ -1,0 +1,29 @@
+{
+  "campaign_dir": "evidence/sandbox/server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools",
+  "combined_completed_rows": 5075,
+  "new_completed_rows": 4000,
+  "next_threshold": {
+    "id": "first_6000",
+    "label": "6,000 samples",
+    "rows": 6000
+  },
+  "sent": [
+    "first_100",
+    "first_1000",
+    "first_2000",
+    "first_250",
+    "first_3000",
+    "first_4000",
+    "first_500",
+    "first_5000"
+  ],
+  "source_completed_rows": 1075,
+  "threshold_times": {
+    "first_2000": "2026-06-09T16:51:37Z",
+    "first_3000": "2026-06-09T20:27:44Z",
+    "first_4000": "2026-06-09T20:55:27Z",
+    "first_5000": "2026-06-09T21:20:28Z"
+  },
+  "total_rows": 21754,
+  "updated_utc": "2026-06-09T21:30:29Z"
+}

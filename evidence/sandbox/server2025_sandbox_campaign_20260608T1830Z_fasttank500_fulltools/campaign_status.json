@@ -1,0 +1,23 @@
+{
+  "batch_count": 42,
+  "batch_size": 500,
+  "candidate_statuses": [
+    "supporting_hint",
+    "conflict_needs_review",
+    "no_hint",
+    "tool_timeout",
+    "blocked_or_error"
+  ],
+  "completed_result_rows": 4500,
+  "created_utc": "2026-06-08T18:30:00Z",
+  "family_extended": "/Users/ps3460/GitHub/VIBEX-50k/datasets/family_extended/manifest.csv",
+  "output_dir": "evidence/sandbox/server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools",
+  "pve_iso_storage": "tank-iso",
+  "run_id": "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools",
+  "skipped_non_pe_mz": 163,
+  "source_campaign": "evidence/sandbox/server2025_sandbox_campaign_20260607T1925Z",
+  "source_completed_rows_excluded": 1075,
+  "target_rows": 20679,
+  "tool_profile": "fast",
+  "updated_utc": "2026-06-09T21:32:59Z"
+}

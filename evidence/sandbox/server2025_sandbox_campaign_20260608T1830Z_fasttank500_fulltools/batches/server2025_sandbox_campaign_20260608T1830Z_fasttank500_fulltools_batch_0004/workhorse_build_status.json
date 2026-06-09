@@ -1,0 +1,11 @@
+{
+  "batch_id": "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0004",
+  "batch_index": 4,
+  "created_utc": "2026-06-09T20:26:39Z",
+  "iso_bytes": 702584832,
+  "iso_path": "/home/phil/vibex_secure_dataset/evidence/server2025_sandbox_campaign/server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools/isos/server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0004.iso",
+  "manifest_rows": 500,
+  "missing_rows": 0,
+  "run_id": "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools",
+  "tool_profile": "fast"
+}

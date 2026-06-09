@@ -1,0 +1,22 @@
+{
+  "batch_id": "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0006",
+  "completed_utc": "2026-06-09T21:06:05.0686026Z",
+  "defender_preference_before": {},
+  "defender_status_before": {
+    "AMServiceEnabled": false,
+    "AntivirusEnabled": false,
+    "AntivirusSignatureLastUpdated": null,
+    "RealTimeProtectionEnabled": false
+  },
+  "output_csv": "C:\\SandboxResults\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0006\\server2025_family_hints.csv",
+  "row_count": 500,
+  "tool_profile": "fast",
+  "tool_versions": {
+    "capa": null,
+    "diec": "3.20.0.0",
+    "floss": null,
+    "sigcheck": "2.91",
+    "strings": "2.54",
+    "yara": null
+  }
+}

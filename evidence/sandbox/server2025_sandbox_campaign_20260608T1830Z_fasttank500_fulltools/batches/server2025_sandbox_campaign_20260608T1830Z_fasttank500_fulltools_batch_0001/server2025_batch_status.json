@@ -1,0 +1,34 @@
+﻿{
+    "batch_id":  "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0001",
+    "completed_utc":  "2026-06-09T14:35:13.0097945Z",
+    "row_count":  500,
+    "tool_profile":  "full",
+    "defender_preference_before":  {
+                                       "DisableRealtimeMonitoring":  false,
+                                       "ExclusionPath":  [
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0001",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0002",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0003",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0004",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0005",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0006",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0007",
+                                                             "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0008"
+                                                         ]
+                                   },
+    "defender_status_before":  {
+                                   "AMServiceEnabled":  true,
+                                   "AntivirusEnabled":  true,
+                                   "RealTimeProtectionEnabled":  true,
+                                   "AntivirusSignatureLastUpdated":  "\/Date(1780989668000)\/"
+                               },
+    "tool_versions":  {
+                          "floss":  null,
+                          "capa":  null,
+                          "yara":  null,
+                          "strings":  "2.54",
+                          "diec":  "3.20.0.0",
+                          "sigcheck":  "2.91"
+                      },
+    "output_csv":  "C:\\SandboxResults\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0001\\server2025_family_hints.csv"
+}

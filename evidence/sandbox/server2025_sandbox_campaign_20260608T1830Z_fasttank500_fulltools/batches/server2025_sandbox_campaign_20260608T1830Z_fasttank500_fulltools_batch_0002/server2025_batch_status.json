@@ -1,0 +1,34 @@
+{
+  "batch_id": "server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0002",
+  "completed_utc": "2026-06-09T20:11:13.9953777Z",
+  "defender_preference_before": {
+    "DisableRealtimeMonitoring": false,
+    "ExclusionPath": [
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0001",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0002",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0003",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0004",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0005",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0006",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0007",
+      "C:\\SandboxWork\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0008"
+    ]
+  },
+  "defender_status_before": {
+    "AMServiceEnabled": true,
+    "AntivirusEnabled": true,
+    "AntivirusSignatureLastUpdated": "/Date(1781012543000)/",
+    "RealTimeProtectionEnabled": true
+  },
+  "output_csv": "C:\\SandboxResults\\server2025_sandbox_campaign_20260608T1830Z_fasttank500_fulltools_batch_0002\\server2025_family_hints.csv",
+  "row_count": 500,
+  "tool_profile": "fast",
+  "tool_versions": {
+    "capa": null,
+    "diec": "3.20.0.0",
+    "floss": null,
+    "sigcheck": "2.91",
+    "strings": "2.54",
+    "yara": null
+  }
+}
