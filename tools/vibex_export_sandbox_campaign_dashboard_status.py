@@ -158,19 +158,40 @@ def newest_errors(path: Path, limit: int = 8) -> list[dict[str, Any]]:
 
 
 def screen_alive(*name_fragments: str) -> bool:
-    proc = subprocess.run(["screen", "-ls"], text=True, capture_output=True, timeout=8)
+    try:
+        proc = subprocess.run(["screen", "-ls"], text=True, capture_output=True, timeout=8)
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return False
     if proc.returncode not in (0, 1):
         return False
     return any(name_fragment in proc.stdout for name_fragment in name_fragments)
 
 
 def campaign_process_alive() -> bool:
-    proc = subprocess.run(
-        ["pgrep", "-af", "vibex_server2025_sandbox_campaign.py"],
-        text=True,
-        capture_output=True,
-        timeout=8,
+    try:
+        proc = subprocess.run(
+            ["pgrep", "-af", "vibex_server2025_sandbox_campaign.py"],
+            text=True,
+            capture_output=True,
+            timeout=8,
+        )
+        return proc.returncode == 0 and bool(proc.stdout.strip())
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        pass
+    ps = (
+        "Get-CimInstance Win32_Process | "
+        "Where-Object { $_.CommandLine -match 'vibex_server2025_sandbox_campaign\\.py' } | "
+        "Select-Object -First 1 -ExpandProperty ProcessId"
     )
+    try:
+        proc = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-Command", ps],
+            text=True,
+            capture_output=True,
+            timeout=8,
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return False
     return proc.returncode == 0 and bool(proc.stdout.strip())
 
 
