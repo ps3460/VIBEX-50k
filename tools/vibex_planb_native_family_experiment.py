@@ -18,8 +18,13 @@ PREVIOUS_BEST_FAMILY_MACRO_F1 = 0.1716344470733068
 DEFAULT_ARCHITECTURES = [
     "compact_cnn",
     "dense_small",
+    "separable_cnn",
+    "squeeze_cnn",
     "residual_small",
+    "wide_residual_small",
     "inception_small",
+    "dual_kernel_cnn",
+    "attention_pool_cnn",
     "convnext_tiny_scratch",
     "efficientnetb0_scratch",
 ]
@@ -229,6 +234,24 @@ def build_model(architecture: str, image_size: int, image_mode: str, class_count
             x = tf.keras.layers.MaxPooling2D()(x)
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
         x = tf.keras.layers.Dense(160, activation="relu")(x)
+    elif architecture == "separable_cnn":
+        x = inputs
+        for filters in (32, 64, 96, 160):
+            x = conv_block(tf, x, filters, separable=True, batch_norm=True)
+            x = conv_block(tf, x, filters, separable=True, batch_norm=True)
+            x = tf.keras.layers.MaxPooling2D()(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dense(160, activation="relu")(x)
+    elif architecture == "squeeze_cnn":
+        x = tf.keras.layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
+        for squeeze, expand in ((16, 48), (24, 72), (32, 96), (48, 144)):
+            y = tf.keras.layers.Conv2D(squeeze, 1, padding="same", activation="relu")(x)
+            a = tf.keras.layers.Conv2D(expand, 1, padding="same", activation="relu")(y)
+            b = tf.keras.layers.Conv2D(expand, 3, padding="same", activation="relu")(y)
+            x = tf.keras.layers.Concatenate()([a, b])
+            x = tf.keras.layers.MaxPooling2D()(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dense(160, activation="relu")(x)
     elif architecture == "residual_small":
         x = tf.keras.layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
         for filters in (32, 64, 128, 192):
@@ -239,6 +262,17 @@ def build_model(architecture: str, image_size: int, image_mode: str, class_count
             x = tf.keras.layers.Activation("relu")(tf.keras.layers.Add()([shortcut, y]))
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
         x = tf.keras.layers.Dense(160, activation="relu")(x)
+    elif architecture == "wide_residual_small":
+        x = tf.keras.layers.Conv2D(48, 3, padding="same", activation="relu")(inputs)
+        for filters in (64, 96, 160, 224):
+            shortcut = tf.keras.layers.Conv2D(filters, 1, strides=2, padding="same")(x)
+            y = tf.keras.layers.Conv2D(filters, 3, strides=2, padding="same", activation="relu")(x)
+            y = tf.keras.layers.BatchNormalization()(y)
+            y = tf.keras.layers.Conv2D(filters, 3, padding="same")(y)
+            y = tf.keras.layers.BatchNormalization()(y)
+            x = tf.keras.layers.Activation("relu")(tf.keras.layers.Add()([shortcut, y]))
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dense(192, activation="relu")(x)
     elif architecture == "inception_small":
         x = tf.keras.layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
         for filters in (32, 64, 96, 128):
@@ -247,6 +281,26 @@ def build_model(architecture: str, image_size: int, image_mode: str, class_count
             c = tf.keras.layers.Conv2D(filters, 5, padding="same", activation="relu")(x)
             x = tf.keras.layers.Concatenate()([a, b, c])
             x = tf.keras.layers.MaxPooling2D()(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dense(192, activation="relu")(x)
+    elif architecture == "dual_kernel_cnn":
+        x = inputs
+        for filters in (32, 64, 128, 192):
+            a = conv_block(tf, x, filters, kernel=3, batch_norm=True)
+            b = conv_block(tf, x, filters, kernel=7, batch_norm=True)
+            x = tf.keras.layers.Concatenate()([a, b])
+            x = tf.keras.layers.Conv2D(filters, 1, padding="same", activation="relu")(x)
+            x = tf.keras.layers.MaxPooling2D()(x)
+        x = tf.keras.layers.GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dense(192, activation="relu")(x)
+    elif architecture == "attention_pool_cnn":
+        x = inputs
+        for filters in (32, 64, 128):
+            x = conv_block(tf, x, filters, batch_norm=True)
+            x = conv_block(tf, x, filters, batch_norm=True)
+            x = tf.keras.layers.MaxPooling2D()(x)
+        attention = tf.keras.layers.Conv2D(1, 1, padding="same", activation="sigmoid")(x)
+        x = tf.keras.layers.Multiply()([x, attention])
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
         x = tf.keras.layers.Dense(192, activation="relu")(x)
     elif architecture == "convnext_tiny_scratch":
