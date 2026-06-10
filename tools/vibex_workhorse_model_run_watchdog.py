@@ -16,6 +16,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 
 TELEGRAM_CMD = [
@@ -84,7 +85,40 @@ def best_metrics(rows: list[dict[str, str]]) -> tuple[str, float, float, float]:
     return best_name, max(best_macro, 0.0), best_weighted, best_accuracy
 
 
-def send_telegram(message: str) -> None:
+def is_quiet(args: argparse.Namespace) -> bool:
+    hour = datetime.now(ZoneInfo(args.telegram_timezone)).hour
+    return hour >= args.quiet_start or hour < args.quiet_end
+
+
+def queue_telegram(args: argparse.Namespace, message: str) -> None:
+    path = Path(args.run_dir) / "logs" / "watchdog_queued_telegram.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"queued_utc": utc_now().strftime("%Y-%m-%dT%H:%M:%SZ"), "message": message}) + "\n")
+
+
+def flush_queued_telegram(args: argparse.Namespace) -> None:
+    if is_quiet(args):
+        return
+    path = Path(args.run_dir) / "logs" / "watchdog_queued_telegram.jsonl"
+    if not path.exists():
+        return
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if not rows:
+        return
+    digest = ["VIBEX model test update", f"Watchdog quiet-hours digest: {len(rows)} queued alerts"]
+    for row in rows[-6:]:
+        digest.append("---")
+        digest.append(row["message"][-1200:])
+    subprocess.run(TELEGRAM_CMD, input="\n".join(digest), text=True, check=False)
+    path.unlink()
+
+
+def send_telegram(args: argparse.Namespace, message: str) -> None:
+    flush_queued_telegram(args)
+    if is_quiet(args):
+        queue_telegram(args, message)
+        return
     subprocess.run(TELEGRAM_CMD, input=message, text=True, check=False)
 
 
@@ -150,7 +184,7 @@ def check_once(args: argparse.Namespace) -> None:
     if not alive:
         key = f"stopped:{completed}"
         if state.get("last_alert_key") != key:
-            send_telegram(build_message("runner stopped before completion", args, rows, age_minutes, alive))
+            send_telegram(args, build_message("runner stopped before completion", args, rows, age_minutes, alive))
             state["last_alert_key"] = key
             save_json(state_path, state | status)
         return
@@ -159,7 +193,7 @@ def check_once(args: argparse.Namespace) -> None:
         bucket = int(age_minutes // args.stall_minutes)
         key = f"stall:{completed}:{bucket}"
         if state.get("last_alert_key") != key:
-            send_telegram(build_message("possible stall", args, rows, age_minutes, alive))
+            send_telegram(args, build_message("possible stall", args, rows, age_minutes, alive))
             state["last_alert_key"] = key
             save_json(state_path, state | status)
 
@@ -171,6 +205,9 @@ def main() -> int:
     parser.add_argument("--expected-groups", type=int, default=10)
     parser.add_argument("--stall-minutes", type=int, default=180)
     parser.add_argument("--interval-seconds", type=int, default=300)
+    parser.add_argument("--telegram-timezone", default="Europe/London")
+    parser.add_argument("--quiet-start", type=int, default=22)
+    parser.add_argument("--quiet-end", type=int, default=6)
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
 

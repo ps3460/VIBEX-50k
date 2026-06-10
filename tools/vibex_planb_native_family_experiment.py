@@ -27,6 +27,10 @@ DEFAULT_ARCHITECTURES = [
     "attention_pool_cnn",
     "convnext_tiny_scratch",
     "efficientnetb0_scratch",
+    "efficientnetb1_scratch",
+    "vgg16_scratch",
+    "mobilenetv3small_scratch",
+    "resnet50_scratch",
 ]
 
 
@@ -71,6 +75,10 @@ def parse_ints(value: str) -> list[int]:
 
 def parse_strings(value: str) -> list[str]:
     return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def parse_floats(value: str) -> list[float]:
+    return [float(item.strip()) for item in str(value).split(",") if item.strip()]
 
 
 def load_native_manifest(path: Path, image_sizes: set[int], image_modes: set[str], target_per_family: int) -> list[dict[str, str]]:
@@ -125,18 +133,27 @@ def subset_rows(rows: list[dict[str, str]], image_size: int, image_mode: str) ->
     ]
 
 
-def stratified_split(rows: list[dict[str, str]], seed: int) -> dict[str, list[dict[str, str]]]:
+def stratified_split(
+    rows: list[dict[str, str]],
+    seed: int,
+    split_ratios: tuple[float, float, float] = (0.7, 0.15, 0.15),
+) -> dict[str, list[dict[str, str]]]:
     grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row in rows:
         grouped[row["task_label"]].append(row)
     rng = random.Random(seed)
     split = {"train": [], "val": [], "test": []}
+    train_ratio, val_ratio, test_ratio = split_ratios
+    if not 0 < train_ratio < 1 or not 0 < val_ratio < 1 or not 0 < test_ratio < 1:
+        raise SystemExit(f"Split ratios must be between 0 and 1: {split_ratios}")
+    if abs((train_ratio + val_ratio + test_ratio) - 1.0) > 0.0001:
+        raise SystemExit(f"Split ratios must sum to 1.0: {split_ratios}")
     for label in sorted(grouped):
         items = list(grouped[label])
         rng.shuffle(items)
         n = len(items)
-        test_n = max(1, round(n * 0.15))
-        val_n = max(1, round(n * 0.15))
+        test_n = max(1, round(n * test_ratio))
+        val_n = max(1, round(n * val_ratio))
         train_n = n - test_n - val_n
         if train_n <= 0:
             raise SystemExit(f"Class {label} has too few rows for train/val/test split: {n}")
@@ -149,8 +166,11 @@ def stratified_split(rows: list[dict[str, str]], seed: int) -> dict[str, list[di
 
 
 def batch_size_for(image_size: int, architecture: str) -> int:
+    large = {"efficientnetb0_scratch", "efficientnetb1_scratch", "vgg16_scratch", "mobilenetv3small_scratch", "resnet50_scratch"}
     if image_size >= 1024:
-        return 1 if "efficientnet" in architecture else 2
+        return 1 if architecture in large else 2
+    if architecture in large:
+        return 1 if image_size >= 512 else 2 if image_size >= 256 else 8
     if image_size >= 512:
         return 4
     if image_size >= 256:
@@ -214,11 +234,20 @@ def convnext_block(tf, x, filters: int):
     return tf.keras.layers.Add()([shortcut, x])
 
 
-def build_model(architecture: str, image_size: int, image_mode: str, class_count: int):
+def build_model(
+    architecture: str,
+    image_size: int,
+    image_mode: str,
+    class_count: int,
+    learning_rate: float = 1e-3,
+    dropout: float = 0.3,
+    label_smoothing: float = 0.0,
+):
     import tensorflow as tf
 
     channels = 3 if image_mode == "rgb_triplet" else 1
     inputs = tf.keras.Input(shape=(image_size, image_size, channels))
+    rgb = inputs if channels == 3 else tf.keras.layers.Concatenate()([inputs, inputs, inputs])
     if architecture == "compact_cnn":
         x = inputs
         for filters in (24, 48, 96, 128):
@@ -314,7 +343,6 @@ def build_model(architecture: str, image_size: int, image_mode: str, class_count
         x = tf.keras.layers.GlobalAveragePooling2D()(x)
         x = tf.keras.layers.Dense(192, activation="gelu")(x)
     elif architecture == "efficientnetb0_scratch":
-        rgb = inputs if channels == 3 else tf.keras.layers.Concatenate()([inputs, inputs, inputs])
         base = tf.keras.applications.EfficientNetB0(
             input_shape=(image_size, image_size, 3),
             include_top=False,
@@ -323,17 +351,83 @@ def build_model(architecture: str, image_size: int, image_mode: str, class_count
         )
         x = base(rgb, training=True)
         x = tf.keras.layers.Dense(192, activation="relu")(x)
+    elif architecture == "efficientnetb1_scratch":
+        base = tf.keras.applications.EfficientNetB1(
+            input_shape=(image_size, image_size, 3),
+            include_top=False,
+            weights=None,
+            pooling="avg",
+        )
+        x = base(rgb, training=True)
+        x = tf.keras.layers.Dense(224, activation="relu")(x)
+    elif architecture == "vgg16_scratch":
+        base = tf.keras.applications.VGG16(
+            input_shape=(image_size, image_size, 3),
+            include_top=False,
+            weights=None,
+            pooling="avg",
+        )
+        x = base(rgb, training=True)
+        x = tf.keras.layers.Dense(256, activation="relu")(x)
+    elif architecture == "mobilenetv3small_scratch":
+        base = tf.keras.applications.MobileNetV3Small(
+            input_shape=(image_size, image_size, 3),
+            include_top=False,
+            include_preprocessing=False,
+            weights=None,
+            pooling="avg",
+        )
+        x = base(rgb, training=True)
+        x = tf.keras.layers.Dense(192, activation="relu")(x)
+    elif architecture == "resnet50_scratch":
+        base = tf.keras.applications.ResNet50(
+            input_shape=(image_size, image_size, 3),
+            include_top=False,
+            weights=None,
+            pooling="avg",
+        )
+        x = base(rgb, training=True)
+        x = tf.keras.layers.Dense(256, activation="relu")(x)
     else:
         raise ValueError(f"Unknown architecture: {architecture}")
-    x = tf.keras.layers.Dropout(0.3)(x)
+    x = tf.keras.layers.Dropout(dropout)(x)
     outputs = tf.keras.layers.Dense(class_count, activation="softmax")(x)
     model = tf.keras.Model(inputs, outputs, name=f"{architecture}_{image_mode}_{image_size}")
+    if label_smoothing > 0:
+        def sparse_smoothed_crossentropy(y_true, y_pred):
+            y_true = tf.cast(tf.reshape(y_true, [-1]), tf.int32)
+            y_true = tf.one_hot(y_true, depth=class_count)
+            y_true = y_true * (1.0 - label_smoothing) + (label_smoothing / class_count)
+            return tf.keras.losses.categorical_crossentropy(y_true, y_pred)
+
+        loss = sparse_smoothed_crossentropy
+    else:
+        loss = tf.keras.losses.SparseCategoricalCrossentropy()
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-        loss="sparse_categorical_crossentropy",
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        loss=loss,
         metrics=["accuracy"],
     )
     return model
+
+
+def evaluate_predictions(rows: list[dict[str, str]], label_to_id: dict[str, int], predictions: Any, labels: list[str]) -> dict[str, Any]:
+    import numpy as np
+    from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+
+    y_true = np.asarray([label_to_id[row["task_label"]] for row in rows], dtype=np.int64)
+    y_pred = np.argmax(predictions, axis=1)
+    cm = confusion_matrix(y_true, y_pred, labels=list(range(len(labels))))
+    per_class = f1_score(y_true, y_pred, labels=list(range(len(labels))), average=None, zero_division=0)
+    per_class_f1 = {label: float(per_class[index]) for index, label in enumerate(labels)}
+    return {
+        "accuracy": float(accuracy_score(y_true, y_pred)),
+        "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
+        "weighted_f1": float(f1_score(y_true, y_pred, average="weighted", zero_division=0)),
+        "nonzero_family_f1_count": int(sum(1 for value in per_class_f1.values() if value > 0)),
+        "per_class_f1": per_class_f1,
+        "confusion_matrix": cm.astype(int).tolist(),
+    }
 
 
 def train_one(
@@ -345,13 +439,20 @@ def train_one(
     output_root: Path,
     epochs: int,
     patience: int,
+    split_ratios: tuple[float, float, float],
+    learning_rate: float,
+    dropout: float,
+    label_smoothing: float,
+    mixed_precision: bool,
 ) -> dict[str, Any]:
-    import numpy as np
     import tensorflow as tf
-    from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
     tf.keras.utils.set_random_seed(seed)
-    split = stratified_split(rows, seed)
+    if mixed_precision:
+        tf.keras.mixed_precision.set_global_policy("mixed_float16")
+    else:
+        tf.keras.mixed_precision.set_global_policy("float32")
+    split = stratified_split(rows, seed, split_ratios)
     labels = sorted({row["task_label"] for row in rows})
     label_to_id = {label: index for index, label in enumerate(labels)}
     batch_size = batch_size_for(image_size, architecture)
@@ -374,6 +475,15 @@ def train_one(
         "batch_size": batch_size,
         "epochs_requested": epochs,
         "patience": patience,
+        "split_ratios": list(split_ratios),
+        "split_sha256": {
+            name: [row["sha256_hash"] for row in values]
+            for name, values in split.items()
+        },
+        "learning_rate": learning_rate,
+        "dropout": dropout,
+        "label_smoothing": label_smoothing,
+        "mixed_precision": mixed_precision,
         "status": "running",
         "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
@@ -382,7 +492,15 @@ def train_one(
         train_ds = make_tf_dataset(split["train"], label_to_id, image_size, image_mode, batch_size, seed, shuffle=True)
         val_ds = make_tf_dataset(split["val"], label_to_id, image_size, image_mode, batch_size, seed, shuffle=False)
         test_ds = make_tf_dataset(split["test"], label_to_id, image_size, image_mode, batch_size, seed, shuffle=False)
-        model = build_model(architecture, image_size, image_mode, len(labels))
+        model = build_model(
+            architecture,
+            image_size,
+            image_mode,
+            len(labels),
+            learning_rate=learning_rate,
+            dropout=dropout,
+            label_smoothing=label_smoothing,
+        )
         result["param_count"] = int(model.count_params())
         history = model.fit(
             train_ds,
@@ -398,22 +516,26 @@ def train_one(
                 )
             ],
         )
-        predictions = model.predict(test_ds, verbose=0)
-        y_true = np.asarray([label_to_id[row["task_label"]] for row in split["test"]], dtype=np.int64)
-        y_pred = np.argmax(predictions, axis=1)
-        cm = confusion_matrix(y_true, y_pred, labels=list(range(len(labels))))
-        per_class = f1_score(y_true, y_pred, labels=list(range(len(labels))), average=None, zero_division=0)
+        val_predictions = model.predict(val_ds, verbose=0)
+        test_predictions = model.predict(test_ds, verbose=0)
         model.save(model_path)
-        per_class_f1 = {label: float(per_class[index]) for index, label in enumerate(labels)}
+        val_metrics = evaluate_predictions(split["val"], label_to_id, val_predictions, labels)
+        test_metrics = evaluate_predictions(split["test"], label_to_id, test_predictions, labels)
         result.update(
             {
                 "status": "completed",
-                "accuracy": float(accuracy_score(y_true, y_pred)),
-                "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
-                "weighted_f1": float(f1_score(y_true, y_pred, average="weighted", zero_division=0)),
-                "nonzero_family_f1_count": int(sum(1 for value in per_class_f1.values() if value > 0)),
-                "per_class_f1": per_class_f1,
-                "confusion_matrix": cm.astype(int).tolist(),
+                "val_accuracy": val_metrics["accuracy"],
+                "val_macro_f1": val_metrics["macro_f1"],
+                "val_weighted_f1": val_metrics["weighted_f1"],
+                "val_nonzero_family_f1_count": val_metrics["nonzero_family_f1_count"],
+                "val_per_class_f1": val_metrics["per_class_f1"],
+                "val_confusion_matrix": val_metrics["confusion_matrix"],
+                "accuracy": test_metrics["accuracy"],
+                "macro_f1": test_metrics["macro_f1"],
+                "weighted_f1": test_metrics["weighted_f1"],
+                "nonzero_family_f1_count": test_metrics["nonzero_family_f1_count"],
+                "per_class_f1": test_metrics["per_class_f1"],
+                "confusion_matrix": test_metrics["confusion_matrix"],
                 "history": {key: [float(item) for item in values] for key, values in history.history.items()},
                 "epochs_run": len(history.history.get("loss", [])),
                 "model_path": str(model_path),
@@ -446,7 +568,11 @@ def safe_result_row(result: dict[str, Any]) -> dict[str, Any]:
         "accuracy": result.get("accuracy"),
         "macro_f1": result.get("macro_f1"),
         "weighted_f1": result.get("weighted_f1"),
+        "val_accuracy": result.get("val_accuracy"),
+        "val_macro_f1": result.get("val_macro_f1"),
+        "val_weighted_f1": result.get("val_weighted_f1"),
         "nonzero_family_f1_count": result.get("nonzero_family_f1_count"),
+        "val_nonzero_family_f1_count": result.get("val_nonzero_family_f1_count"),
         "train_rows": result.get("train_rows"),
         "val_rows": result.get("val_rows"),
         "test_rows": result.get("test_rows"),
@@ -456,6 +582,11 @@ def safe_result_row(result: dict[str, Any]) -> dict[str, Any]:
         "epochs_requested": result.get("epochs_requested"),
         "epochs_run": result.get("epochs_run"),
         "patience": result.get("patience"),
+        "split_ratios": result.get("split_ratios"),
+        "learning_rate": result.get("learning_rate"),
+        "dropout": result.get("dropout"),
+        "label_smoothing": result.get("label_smoothing"),
+        "mixed_precision": result.get("mixed_precision"),
         "train_seconds": result.get("train_seconds"),
         "model_path": result.get("model_path"),
         "model_sha256": result.get("model_sha256"),
@@ -473,6 +604,8 @@ def aggregate_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for (architecture, image_size, image_mode), items in sorted(groups.items()):
         macro_values = [float(row.get("macro_f1") or 0.0) for row in items]
         accuracy_values = [float(row.get("accuracy") or 0.0) for row in items]
+        val_macro_values = [float(row.get("val_macro_f1") or 0.0) for row in items]
+        val_accuracy_values = [float(row.get("val_accuracy") or 0.0) for row in items]
         nonzero_values = [int(row.get("nonzero_family_f1_count") or 0) for row in items]
         rows.append(
             {
@@ -484,6 +617,10 @@ def aggregate_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "accuracy_std": pstdev(accuracy_values) if len(accuracy_values) > 1 else 0.0,
                 "macro_f1_mean": mean(macro_values),
                 "macro_f1_std": pstdev(macro_values) if len(macro_values) > 1 else 0.0,
+                "val_accuracy_mean": mean(val_accuracy_values),
+                "val_accuracy_std": pstdev(val_accuracy_values) if len(val_accuracy_values) > 1 else 0.0,
+                "val_macro_f1_mean": mean(val_macro_values),
+                "val_macro_f1_std": pstdev(val_macro_values) if len(val_macro_values) > 1 else 0.0,
                 "weighted_f1_mean": mean([float(row.get("weighted_f1") or 0.0) for row in items]),
                 "weighted_f1_std": pstdev([float(row.get("weighted_f1") or 0.0) for row in items]) if len(items) > 1 else 0.0,
                 "nonzero_family_f1_mean": mean(nonzero_values),
@@ -512,6 +649,8 @@ def write_evidence(evidence_dir: Path, results: list[dict[str, Any]], metadata: 
             "classes": row.get("classes"),
             "confusion_matrix": row.get("confusion_matrix"),
             "per_class_f1": row.get("per_class_f1"),
+            "val_confusion_matrix": row.get("val_confusion_matrix"),
+            "val_per_class_f1": row.get("val_per_class_f1"),
         }
         for row in completed
     }
@@ -607,6 +746,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "rows_per_size_mode": sum(family_counts.values()),
         "previous_best_family_macro_f1": PREVIOUS_BEST_FAMILY_MACRO_F1,
         "primary_metric": "malware_family_macro_f1_mean",
+        "split_ratios": args.split_ratios,
+        "learning_rate": args.learning_rate,
+        "dropout": args.dropout,
+        "label_smoothing": args.label_smoothing,
+        "mixed_precision": args.mixed_precision,
     }
     (evidence_dir / "planb_native_family_dataset_manifest.json").parent.mkdir(parents=True, exist_ok=True)
     (evidence_dir / "planb_native_family_dataset_manifest.json").write_text(
@@ -628,6 +772,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         output_root,
                         args.epochs,
                         args.patience,
+                        tuple(args.split_ratios),
+                        args.learning_rate,
+                        args.dropout,
+                        args.label_smoothing,
+                        args.mixed_precision,
                     )
                     results.append(result)
                     write_evidence(evidence_dir, results, metadata)
@@ -661,11 +810,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seeds", default="1337,2027,4099")
     parser.add_argument("--epochs", type=int, default=12)
     parser.add_argument("--patience", type=int, default=3)
+    parser.add_argument("--split-ratios", default="0.7,0.15,0.15")
+    parser.add_argument("--learning-rate", type=float, default=1e-3)
+    parser.add_argument("--dropout", type=float, default=0.3)
+    parser.add_argument("--label-smoothing", type=float, default=0.0)
+    parser.add_argument("--mixed-precision", action="store_true")
     args = parser.parse_args()
     args.image_sizes = parse_ints(args.image_sizes)
     args.image_modes = parse_strings(args.image_modes)
     args.architectures = parse_strings(args.architectures)
     args.seeds = parse_ints(args.seeds)
+    args.split_ratios = parse_floats(args.split_ratios)
+    if len(args.split_ratios) != 3:
+        raise SystemExit("--split-ratios must contain train,val,test, e.g. 0.8,0.1,0.1")
     return args
 
 
