@@ -664,6 +664,33 @@ def run(args: argparse.Namespace) -> int:
     }
     write_json(run_dir / "run_metadata.json", metadata)
     messenger = Messenger(args, run_dir)
+    if args.smoke:
+        groups: list[dict[str, Any]] = []
+        smoke_models = ["compact_cnn"] + LARGE_MODELS
+        smoke_rep = "prefix1024_32" if "prefix1024_32" in manifests else next(iter(manifests))
+        metadata["smoke"] = True
+        for architecture in smoke_models:
+            group = run_group(
+                args,
+                run_dir,
+                manifests,
+                "smoke",
+                smoke_rep,
+                architecture,
+                [args.scout_seed],
+                1,
+                1,
+                1e-3,
+                0.3,
+                0.0,
+                architecture in LARGE_MODELS,
+                args.smoke_target_per_class,
+            )
+            groups.append(group)
+            write_overall(run_dir, metadata, groups)
+        write_json(run_dir / "smoke_status.json", {"status": "completed", "groups": groups})
+        return 0
+
     messenger.send(
         "VIBEX model test update",
         [
@@ -758,6 +785,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--benign-macro-gate", type=float, default=0.85)
     parser.add_argument("--benign-scan-limit", type=int, default=40000)
     parser.add_argument("--mixed-precision-large", action="store_true")
+    parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--smoke-target-per-class", type=int, default=2)
     parser.add_argument("--telegram", action="store_true")
     parser.add_argument("--telegram-timezone", default="Europe/London")
     parser.add_argument("--quiet-start", type=int, default=22)
