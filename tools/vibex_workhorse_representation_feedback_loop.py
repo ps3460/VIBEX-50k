@@ -786,7 +786,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--benign-scan-limit", type=int, default=40000)
     parser.add_argument("--mixed-precision-large", action="store_true")
     parser.add_argument("--smoke", action="store_true")
-    parser.add_argument("--smoke-target-per-class", type=int, default=2)
+    parser.add_argument("--smoke-target-per-class", type=int, default=5)
     parser.add_argument("--telegram", action="store_true")
     parser.add_argument("--telegram-timezone", default="Europe/London")
     parser.add_argument("--quiet-start", type=int, default=22)
