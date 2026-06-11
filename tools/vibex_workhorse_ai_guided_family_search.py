@@ -333,24 +333,30 @@ def build_manifests(args: argparse.Namespace, run_dir: Path) -> dict[str, dict[s
         malware_rows = []
         benign_rows = []
         for row in malware:
-            raw_path = raw_path_for_malware(row, Path(args.raw_root))
-            if not raw_path.exists():
-                audit.append({"representation": rep_name, "sha256": row["sha256_hash"], "status": "missing_malware_raw"})
-                continue
-            raw = raw_path.read_bytes()
             image_path = run_dir / "derived_pngs" / rep_name / row["family"] / f"{row['sha256_hash']}.png"
-            image_sha, available = render_representation(raw, rep, image_path)
+            if image_path.exists():
+                image_sha, available = sha256_file(image_path), "existing"
+            else:
+                raw_path = raw_path_for_malware(row, Path(args.raw_root))
+                if not raw_path.exists():
+                    audit.append({"representation": rep_name, "sha256": row["sha256_hash"], "status": "missing_malware_raw"})
+                    continue
+                raw = raw_path.read_bytes()
+                image_sha, available = render_representation(raw, rep, image_path)
             item = dict(row)
             item.update({"image_path": str(image_path), "image_size": str(rep["image_size"]), "image_mode": "gray", "representation": rep_name, "representation_image_sha256": image_sha, "representation_bytes_available": available})
             malware_rows.append(item)
         for row in benign:
-            raw_path = benign_index.get(row["sha256_hash"])
-            if not raw_path:
-                audit.append({"representation": rep_name, "sha256": row["sha256_hash"], "status": "missing_benign_raw"})
-                continue
-            raw = raw_path.read_bytes()
             image_path = run_dir / "derived_pngs" / rep_name / row["family"] / f"{row['sha256_hash']}.png"
-            image_sha, available = render_representation(raw, rep, image_path)
+            if image_path.exists():
+                image_sha, available = sha256_file(image_path), "existing"
+            else:
+                raw_path = benign_index.get(row["sha256_hash"])
+                if not raw_path:
+                    audit.append({"representation": rep_name, "sha256": row["sha256_hash"], "status": "missing_benign_raw"})
+                    continue
+                raw = raw_path.read_bytes()
+                image_sha, available = render_representation(raw, rep, image_path)
             item = dict(row)
             item.update({"image_path": str(image_path), "image_size": str(rep["image_size"]), "image_mode": "gray", "representation": rep_name, "representation_image_sha256": image_sha, "representation_bytes_available": available})
             benign_rows.append(item)
@@ -794,7 +800,6 @@ def ask_gemma(args: argparse.Namespace, run_dir: Path, state: dict[str, Any], st
     top = sorted(completed, key=lambda row: (row.get("macro_f1") or 0.0, row.get("accuracy") or 0.0), reverse=True)[:20]
     recent = completed[-25:]
     prompt = {
-        "instruction": "Return strict JSON only. Recommend bounded sampling weights/ranges for the next VIBEX malware-family model-search batch.",
         "allowed_representations": list(REPRESENTATIONS),
         "allowed_architectures": PRIMARY_ARCHITECTURES + SECONDARY_ARCHITECTURES,
         "allowed_dataset_modes": ["malware_defensible_extended", "malware_plus_benign_sources"],
@@ -813,22 +818,56 @@ def ask_gemma(args: argparse.Namespace, run_dir: Path, state: dict[str, Any], st
             "rationale": "short safe text",
         },
     }
-    proc = subprocess.run(
-        ["ollama", "run", args.ollama_model],
-        input=json.dumps(prompt, sort_keys=True),
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=args.ai_timeout_seconds,
-        check=False,
+    prompt_text = "\n".join(
+        [
+            "You are a bounded API advisor for a malware-family CNN search.",
+            "Your response MUST be one JSON object only.",
+            "Do not use markdown, code fences, bullets, prose, or explanations outside JSON.",
+            "Do not suggest commands, code edits, file operations, SQL changes, or shell actions.",
+            "Only use keys from output_schema. Values outside allowlists will be ignored.",
+            "Context JSON:",
+            json.dumps(prompt, sort_keys=True),
+        ]
     )
-    raw_text = proc.stdout.strip()
+
+    def run_ollama(input_text: str) -> tuple[str, int]:
+        proc = subprocess.run(
+            ["ollama", "run", args.ollama_model],
+            input=input_text,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=args.ai_timeout_seconds,
+            check=False,
+        )
+        return proc.stdout.strip(), proc.returncode
+
+    def parse_json_object(text: str) -> dict[str, Any]:
+        clean = text.strip()
+        if clean.startswith("```"):
+            clean = re.sub(r"^```(?:json)?\s*", "", clean)
+            clean = re.sub(r"\s*```$", "", clean)
+        start = clean.index("{")
+        end = clean.rindex("}") + 1
+        return json.loads(clean[start:end])
+
+    raw_text, returncode = run_ollama(prompt_text)
     try:
-        start = raw_text.index("{")
-        end = raw_text.rindex("}") + 1
-        raw = json.loads(raw_text[start:end])
+        raw = parse_json_object(raw_text)
     except Exception:
-        raw = {"rationale": "AI response was not valid JSON", "raw_excerpt": raw_text[:500], "returncode": proc.returncode}
+        retry_text = "\n".join(
+            [
+                "Return exactly one valid JSON object matching this schema. No markdown. No explanation.",
+                json.dumps(prompt["output_schema"], sort_keys=True),
+                "Use this context:",
+                json.dumps({k: prompt[k] for k in ["allowed_representations", "allowed_architectures", "allowed_dataset_modes", "top_completed", "recent_completed", "current_state"]}, sort_keys=True),
+            ]
+        )
+        raw_text, returncode = run_ollama(retry_text)
+        try:
+            raw = parse_json_object(raw_text)
+        except Exception:
+            raw = {"rationale": "AI response was not valid JSON", "raw_excerpt": raw_text[:500], "returncode": returncode}
     accepted = validate_advice(raw, state)
     state["advice_index"] = int(state.get("advice_index") or 0) + 1
     state["last_advice_completed"] = len(completed)
