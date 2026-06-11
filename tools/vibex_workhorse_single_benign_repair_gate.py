@@ -204,6 +204,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--label-smoothing", type=float, default=0.02)
     parser.add_argument("--mixed-precision", action="store_true")
     parser.add_argument("--telegram", action="store_true")
+    parser.add_argument("--major-telegram-only", action="store_true")
+    parser.add_argument("--major-accuracy", type=float, default=0.9)
+    parser.add_argument("--major-macro-f1", type=float, default=0.85)
     parser.add_argument("--telegram-timezone", default="Europe/London")
     parser.add_argument("--quiet-start", type=int, default=22)
     parser.add_argument("--quiet-end", type=int, default=6)
@@ -222,19 +225,20 @@ def main() -> None:
     rows: list[dict[str, Any]] = []
     write_json(run_dir / "single_benign_gate_status.json", status_payload(args, run_dir, rows))
     total = len(args.representations) * len(args.architectures)
-    send_telegram(
-        args,
-        run_dir,
-        [
-            "VIBEX model repair update",
-            "",
-            "Starting the repaired single-benign model gate.",
-            f"Candidates: {total}.",
-            f"Representations: {', '.join(args.representations)}.",
-            f"Models: {', '.join(args.architectures)}.",
-            "Next update: first candidate completion.",
-        ],
-    )
+    if not args.major_telegram_only:
+        send_telegram(
+            args,
+            run_dir,
+            [
+                "VIBEX model repair update",
+                "",
+                "Starting the repaired single-benign model gate.",
+                f"Candidates: {total}.",
+                f"Representations: {', '.join(args.representations)}.",
+                f"Models: {', '.join(args.architectures)}.",
+                "Next update: first candidate completion.",
+            ],
+        )
 
     previous_best = None
     index = 0
@@ -253,7 +257,16 @@ def main() -> None:
                 and current_best.get("candidate_id") == row.get("candidate_id")
                 and (not previous_best or numeric(current_best, "macro_f1_mean") > numeric(previous_best, "macro_f1_mean"))
             )
-            if index == 1 or row.get("status") == "failed" or is_new_best:
+            should_notify = index == 1 or row.get("status") == "failed" or is_new_best
+            if args.major_telegram_only:
+                should_notify = row.get("status") == "failed" or (
+                    is_new_best
+                    and (
+                        numeric(row, "accuracy_mean") >= args.major_accuracy
+                        or numeric(row, "macro_f1_mean") >= args.major_macro_f1
+                    )
+                )
+            if should_notify:
                 best = current_best or {}
                 send_telegram(
                     args,
