@@ -113,14 +113,17 @@ def load_native_manifest(path: Path, image_sizes: set[int], image_modes: set[str
             shortfalls = {}
             for family in families:
                 samples = grouped.get((family, image_size, image_mode), {})
-                if len(samples) < target_per_family:
+                if target_per_family > 0 and len(samples) < target_per_family:
                     shortfalls[family] = target_per_family - len(samples)
             if shortfalls:
                 raise SystemExit(
                     f"Insufficient native PNG rows for size={image_size} mode={image_mode}: {shortfalls}"
                 )
             for family in families:
-                selected = [grouped[(family, image_size, image_mode)][sha] for sha in sorted(grouped[(family, image_size, image_mode)])[:target_per_family]]
+                selected_shas = sorted(grouped[(family, image_size, image_mode)])
+                if target_per_family > 0:
+                    selected_shas = selected_shas[:target_per_family]
+                selected = [grouped[(family, image_size, image_mode)][sha] for sha in selected_shas]
                 rows.extend(selected)
     return rows
 
