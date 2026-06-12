@@ -30,16 +30,15 @@ function Save-State($Payload) {
 
 function Ssh-CommonArgs() {
   $keyPath = $Key.Replace("\", "/")
-  $proxy = "ssh.exe -i $keyPath -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL $JumpHost -W %h:%p"
   return @(
     "-i", $keyPath,
+    "-J", $JumpHost,
     "-o", "ServerAliveInterval=30",
     "-o", "ServerAliveCountMax=6",
     "-o", "BatchMode=yes",
     "-o", "ConnectTimeout=30",
     "-o", "StrictHostKeyChecking=no",
-    "-o", "UserKnownHostsFile=NUL",
-    "-o", "ProxyCommand=$proxy"
+    "-o", "UserKnownHostsFile=NUL"
   )
 }
 
