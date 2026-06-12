@@ -30,37 +30,29 @@ function Save-State($Payload) {
 
 function Ssh-CommonArgs() {
   $keyPath = $Key.Replace("\", "/")
+  $proxy = "ssh.exe -i $keyPath -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL $JumpHost -W %h:%p"
   return @(
     "-i", $keyPath,
-    "-J", $JumpHost,
     "-o", "ServerAliveInterval=30",
     "-o", "ServerAliveCountMax=6",
     "-o", "BatchMode=yes",
     "-o", "ConnectTimeout=30",
     "-o", "StrictHostKeyChecking=no",
-    "-o", "UserKnownHostsFile=NUL"
+    "-o", "UserKnownHostsFile=NUL",
+    "-o", "ProxyCommand=$proxy"
   )
 }
 
 function Invoke-SandboxText([string]$RemoteCommand, [int]$TimeoutSeconds = 0) {
   $args = @(Ssh-CommonArgs) + @($SandboxHost, $RemoteCommand)
-  $stdout = Join-Path $BaseDir ("ssh_{0}.out" -f [guid]::NewGuid())
-  $stderr = Join-Path $BaseDir ("ssh_{0}.err" -f [guid]::NewGuid())
   $result = [ordered]@{ exit_code=$null; stdout=""; stderr=""; timed_out=$false }
   try {
-    $p = Start-Process -FilePath "ssh.exe" -ArgumentList $args -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-    if ($TimeoutSeconds -gt 0 -and -not $p.WaitForExit($TimeoutSeconds * 1000)) {
-      try { $p.Kill() } catch {}
-      $result.timed_out = $true
-      $result.exit_code = 124
-    } else {
-      $p.WaitForExit()
-      $result.exit_code = $p.ExitCode
-    }
-    if (Test-Path $stdout) { $result.stdout = Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
-    if (Test-Path $stderr) { $result.stderr = Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
-  } finally {
-    Remove-Item $stdout,$stderr -Force -ErrorAction SilentlyContinue
+    $output = & ssh.exe @args 2>&1
+    $result.exit_code = $LASTEXITCODE
+    $result.stdout = ($output | Out-String)
+  } catch {
+    $result.exit_code = 1
+    $result.stderr = $_.Exception.Message
   }
   return [pscustomobject]$result
 }
@@ -144,6 +136,12 @@ try {
 
   while ($true) {
     $progress = Read-SandboxProgress
+    if (-not $progress) {
+      Write-Log "waiting because sandbox progress is unavailable"
+      Save-State ([ordered]@{status="waiting_progress_unavailable"; pid=$PID; target_rows=$TargetRows})
+      Start-Sleep -Seconds $PollSeconds
+      continue
+    }
     $saved = 0
     if ($progress -and $progress.saved_rows) { $saved = [int]$progress.saved_rows }
 
