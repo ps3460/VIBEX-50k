@@ -170,9 +170,8 @@ try {
     if ($progress -and $progress.saved_rows) { $saved = [int]$progress.saved_rows }
 
     if ($saved -ge $TargetRows) {
-      $dupes = Test-Duplicates
       Write-Log "complete saved=$saved"
-      Save-State ([ordered]@{status="complete"; pid=$PID; saved_rows=$saved; target_rows=$TargetRows; progress=$progress; duplicate_summary=$dupes})
+      Save-State ([ordered]@{status="complete"; pid=$PID; saved_rows=$saved; target_rows=$TargetRows; progress=$progress})
       break
     }
 
@@ -205,8 +204,7 @@ try {
     if ($after -and $after.saved_rows) { $afterSaved = [int]$after.saved_rows }
     Write-Log "chunk finished target=$target exit=$($res.exit_code) saved=$afterSaved elapsed_seconds=$elapsed"
 
-    $dupes = Test-Duplicates
-    Save-State ([ordered]@{status="chunk_finished"; pid=$PID; saved_rows=$afterSaved; chunk_target=$target; target_rows=$TargetRows; exit_code=$res.exit_code; elapsed_seconds=$elapsed; progress=$after; duplicate_summary=$dupes})
+    Save-State ([ordered]@{status="chunk_finished"; pid=$PID; saved_rows=$afterSaved; chunk_target=$target; target_rows=$TargetRows; exit_code=$res.exit_code; elapsed_seconds=$elapsed; progress=$after})
 
     if ($res.exit_code -ne 0) {
       Write-Log "stopping after nonzero exit=$($res.exit_code) target=$target"
