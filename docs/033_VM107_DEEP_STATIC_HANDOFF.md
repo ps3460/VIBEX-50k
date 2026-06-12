@@ -106,6 +106,31 @@ Chunk command:
 
 Replace `1000` with the next target row count. The classifier skips hashes already present in `S:\results\deep_static_family_results.csv`.
 
+For VM107 takeover, run the VM107 resident supervisor instead of keeping a Codex shell attached:
+
+```powershell
+cd C:\Users\phil\codex\VIBEX-50k
+git pull --ff-only
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\vibex_vm107_deep_static_manager.ps1
+```
+
+For detached operation from an SSH session on VM107:
+
+```powershell
+$manager = 'C:\Users\phil\codex\VIBEX-50k\tools\vibex_vm107_deep_static_manager.ps1'
+$base = 'C:\Users\phil\codex\vibex_deep_static_manager'
+New-Item -ItemType Directory -Force $base | Out-Null
+Start-Process powershell.exe -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$manager) -RedirectStandardOutput "$base\manager_stdout.log" -RedirectStandardError "$base\manager_stderr.log" -WindowStyle Hidden
+```
+
+The supervisor writes:
+
+- `C:\Users\phil\codex\vibex_deep_static_manager\manager.log`
+- `C:\Users\phil\codex\vibex_deep_static_manager\manager_state.json`
+- `C:\Users\phil\codex\vibex_deep_static_manager\deep_static_family_progress.live.json`
+
+It waits if the sandbox progress file shows an active bounded chunk, starts the next chunk only at a stable chunk boundary, and stops instead of risking duplicate rows if progress is stale.
+
 Copy safe outputs after every chunk:
 
 ```bash
