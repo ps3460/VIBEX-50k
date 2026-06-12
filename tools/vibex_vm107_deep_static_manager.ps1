@@ -43,16 +43,40 @@ function Ssh-CommonArgs() {
   )
 }
 
+function Quote-CmdArg([string]$Value) {
+  return '"' + ($Value -replace '"', '\"') + '"'
+}
+
 function Invoke-SandboxText([string]$RemoteCommand, [int]$TimeoutSeconds = 0) {
-  $args = @(Ssh-CommonArgs) + @($SandboxHost, $RemoteCommand)
+  $keyPath = $Key.Replace("\", "/")
+  $proxy = "ssh.exe -i $keyPath -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL $JumpHost -W %h:%p"
+  $stdout = Join-Path $BaseDir ("ssh_{0}.out" -f [guid]::NewGuid())
+  $stderr = Join-Path $BaseDir ("ssh_{0}.err" -f [guid]::NewGuid())
   $result = [ordered]@{ exit_code=$null; stdout=""; stderr=""; timed_out=$false }
   try {
-    $output = & ssh.exe @args 2>&1
+    $command = @(
+      "ssh.exe",
+      "-i", (Quote-CmdArg $keyPath),
+      "-o", "ServerAliveInterval=30",
+      "-o", "ServerAliveCountMax=6",
+      "-o", "BatchMode=yes",
+      "-o", "ConnectTimeout=30",
+      "-o", "StrictHostKeyChecking=no",
+      "-o", "UserKnownHostsFile=NUL",
+      "-o", (Quote-CmdArg "ProxyCommand=$proxy"),
+      $SandboxHost,
+      (Quote-CmdArg $RemoteCommand)
+    ) -join " "
+    $cmd = "$command > $(Quote-CmdArg $stdout) 2> $(Quote-CmdArg $stderr)"
+    & cmd.exe /d /c $cmd
     $result.exit_code = $LASTEXITCODE
-    $result.stdout = ($output | Out-String)
+    if (Test-Path $stdout) { $result.stdout = Get-Content $stdout -Raw -ErrorAction SilentlyContinue }
+    if (Test-Path $stderr) { $result.stderr = Get-Content $stderr -Raw -ErrorAction SilentlyContinue }
   } catch {
     $result.exit_code = 1
     $result.stderr = $_.Exception.Message
+  } finally {
+    Remove-Item $stdout,$stderr -Force -ErrorAction SilentlyContinue
   }
   return [pscustomobject]$result
 }
